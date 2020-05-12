@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>楚师傅专用节奏计时器</title>
+</head>
+<style type="text/css">
+    input.btn {
+        display: block;
+        margin: 0 auto;
+        width: 86px;
+    }
+
+    #watch {
+        font-size: 130px;
+        font-family: Arial;
+        font-weight: bold;
+        color: navy;
+        text-align: center
+    }
+
+    #watch_f {
+        font-size: 30px;
+        font-family: Arial;
+        /* font-weight: bold; */
+        color: yellowgreen;
+        text-align: center
+    }
+
+    #description {
+        font-size: 10px;
+        font-family: Arial;
+        text-align: center
+    }
+
+    #description table {
+        margin: 0 auto;
+        background: slategrey;
+    }
+
+    #description table td {
+        background: #FFF;
+        font-size: 15px;
+    }
+
+    #description table th {
+        color: #FFF;
+        font-size: 20px;
+
+    }
+</style>
+
+<body>
+    <div id="watch">000</div>
+    <div id="watch_f">00:00.000</div>
+    <div id="info" style="text-align:center">使用说明：点击任意键开始，点击空格生成分割线。</div>
+    <div id="description">
+        <table id="infoTable" width="400" border="0" cellspacing="1" cellpadding="0">
+            <tr>
+                <th width="200">序号</th>
+                <th width="100">毫秒</th>
+                <th width="100">时间</th>
+            </tr>
+        </table>
+    </div>
+    <input type="button" class="btn" value="重置" id="resetBtn" onclick=" reset();">
+
+    <script>
+        starttime = null;
+        index = 0;
+        isPause = true;
+        document.onkeydown = function (event) {
+            let now = new Date();
+            if (!starttime) {
+                starttime = new Date();
+
+                printInfo("time0", "开始", "00:00.000");
+                // localStorage.setItem("time0", "开始");
+                // document.getElementById("description").innerHTML = 'time0:开始<br>';
+                isPause = false;
+                tick();
+            } else {
+
+                if (event.keyCode == 32) {
+                    let nowInfo = intervalTime(starttime, now);
+                    let key = "----------分割线---------";
+                    let value = nowInfo.time;
+                    printInfo(key, value, nowInfo.time_f);
+                } else {
+                    let nowInfo = intervalTime(starttime, now);
+                    var key = "time" + nowInfo.index;
+                    var value = nowInfo.time;
+                    printInfo(key, value, nowInfo.time_f);
+                }
+            }
+        }
+        /**计算时间差 打印log */
+        function intervalTime(startTime, endTime) {
+            var date1 = new Date(startTime);  //开始时间
+            var date2 = new Date(endTime);    //结束时间
+            var date3 = date2.getTime() - date1.getTime();  //时间差的毫秒数
+            //计算出相差天数
+            var days = Math.floor(date3 / (24 * 3600 * 1000));
+            //计算出小时数
+
+            var leave1 = date3 % (24 * 3600 * 1000);    //计算天数后剩余的毫秒数
+            var hours = Math.floor(leave1 / (3600 * 1000));
+            //计算相差分钟数
+            var leave2 = leave1 % (3600 * 1000);        //计算小时数后剩余的毫秒数
+            var minutes = Math.floor(leave2 / (60 * 1000));
+
+            //计算相差秒数
+
+            var leave3 = leave2 % (60 * 1000);      //计算分钟数后剩余的毫秒数
+            var seconds = Math.floor(leave3 / 1000);
+            var ms = leave3 - seconds * 1000;
+            let time_formate = (minutes < 10 ? ("0" + minutes) : minutes) +
+                ":" + (seconds < 10 ? ("0" + seconds) : seconds) + "." +
+                (ms < 10 ? ("00" + ms) : (ms < 100 ? ("0" + ms) : ms))
+            let timeString = date3;
+            // console.log(minutes + ":" + seconds + "." + ms);
+            index++;
+            return { index: index, time: timeString, time_f: time_formate }
+        };
+        function printInfo(key, value, time_f) {
+            localStorage.setItem(key, value);
+            let txt = "<tr>" +
+                "<td>" + key + "</td>" +
+                "<td>" + value + "</td>" +
+                "<td>" + time_f + "</td>" +
+                "</tr>";
+            console.log
+            document.getElementById("infoTable").innerHTML += txt;
+            //  key + ':' + value + '<br>';
+            // 设置浏览器滚动到最新位置
+            let y = document.body.offsetHeight;
+            window.scrollTo(0, y)
+        };
+        fps = 30;
+        function tick() {
+            setTimeout(function () {
+                if (!isPause) {
+                    requestAnimationFrame(tick);
+                    setTimeString(); // ... Code for Drawing the Frame ...
+                }
+            }, 1000 / fps);
+        }
+        function setTimeString() {
+            var date1 = new Date(starttime);  //开始时间
+            var date2 = new Date();    //结束时间
+            // var date3 = date2.getTime() - date1.getTime();  //时间差的毫秒数
+            let info = intervalTime(date1, date2)
+            index--;// 这地方是这样处理的
+
+            document.getElementById("watch").innerHTML = info.time;
+
+            document.getElementById("watch_f").innerHTML = info.time_f;
+        }
+        function reset() {
+            localStorage.clear();
+            starttime = null;
+            isPause = true;
+            index = 0;
+            document.getElementById("watch").innerHTML = "000";
+            document.getElementById("infoTable").innerHTML = "";
+        }
+    </script>
+</body>
+
+</html>
